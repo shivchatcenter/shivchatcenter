@@ -8,6 +8,10 @@
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -16,7 +20,7 @@
     <div class="nav-container">
       <div class="nav-left">
         <div class="logo-wrapper">
-          <img src="./logo.png" alt="Shiv Chat Center" class="nav-logo" onerror="this.src='https://via.placeholder.com/60x60/2f4f4f/ffffff?text=SC'">
+          <img src="https://i.ibb.co/B97LTF1/owner.png" alt="Shiv Chat Center" class="nav-logo">
           <div class="logo-text-wrapper">
             <h1 class="nav-shop-name">Shiv Chat Center</h1>
             <span class="since-badge">Since 2005</span>
@@ -29,9 +33,6 @@
           <i class="fas fa-shopping-cart"></i>
           <span class="cart-count" id="cartCount">0</span>
         </div>
-        <button class="nav-login-btn" onclick="openLoginModal()">
-          <i class="fas fa-user"></i> Login
-        </button>
       </div>
     </div>
   </nav>
@@ -50,46 +51,55 @@
         <span>Total:</span>
         <span id="cartTotal">₹0</span>
       </div>
-      <button class="checkout-btn" onclick="proceedToCheckout()">Proceed to Checkout</button>
+      <button class="checkout-btn" onclick="proceedToCheckout()">
+        <i class="fas fa-whatsapp"></i> Order via WhatsApp
+      </button>
     </div>
   </div>
 
-  <!-- Login Modal -->
-  <div class="modal" id="loginModal">
-    <div class="modal-content">
-      <span class="close-modal" onclick="closeLoginModal()">&times;</span>
-      <h2>Welcome Back!</h2>
-      <form id="loginForm" onsubmit="handleLogin(event)">
-        <input type="email" placeholder="Email or Phone" required>
-        <input type="password" placeholder="Password" required>
-        <button type="submit" class="modal-btn">Login</button>
-        <p class="modal-footer">Don't have account? <a href="#" onclick="showRegister()">Register</a></p>
-      </form>
-    </div>
-  </div>
-
-  <!-- Hero Section with Parallax -->
+  <!-- Hero Slider with Your Images -->
   <section class="hero">
     <div class="hero-slider" id="heroSlider">
-      <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1606491956689-2ea866880c84?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')">
+      <div class="slide active" style="background-image: url('https://i.ibb.co/6JLhTBhy/IMG-20250809-164731738-HDR-AE.jpg')">
         <div class="slide-content">
           <span class="slide-tag">Welcome to</span>
           <h2>Shiv Chat Center</h2>
           <p>Fresh & Delicious Chaat Since 2005</p>
         </div>
       </div>
-      <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')">
+      <div class="slide" style="background-image: url('https://i.ibb.co/Y4xg7BMw/IMG-20250809-164426083-HDR-AE.jpg')">
         <div class="slide-content">
           <span class="slide-tag">Speciality</span>
           <h2>Aloo Chat & Pani Puri</h2>
           <p>Made with Fresh Ingredients</p>
         </div>
       </div>
-      <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1626082927389-6cd097cdc0ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')">
+      <div class="slide" style="background-image: url('https://i.ibb.co/S417YxCY/IMG-20250809-164557713-HDR-AE.jpg')">
         <div class="slide-content">
           <span class="slide-tag">Crispy & Tasty</span>
           <h2>Samosa & Kachori</h2>
           <p>Perfect Evening Snacks</p>
+        </div>
+      </div>
+      <div class="slide" style="background-image: url('https://i.ibb.co/YBbRqw08/IMG-20250809-164606209-HDR-AE.jpg')">
+        <div class="slide-content">
+          <span class="slide-tag">Fresh Made</span>
+          <h2>Daily Fresh</h2>
+          <p>Hygienic Preparation</p>
+        </div>
+      </div>
+      <div class="slide" style="background-image: url('https://i.ibb.co/mfnkv3K/IMG-20250809-164620195-HDR-AE.jpg')">
+        <div class="slide-content">
+          <span class="slide-tag">Evening Special</span>
+          <h2>Hot & Spicy</h2>
+          <p>Perfect Snacks</p>
+        </div>
+      </div>
+      <div class="slide" style="background-image: url('https://i.ibb.co/wFXyLbFL/IMG-20250809-164654105-HDR-AE.jpg')">
+        <div class="slide-content">
+          <span class="slide-tag">Must Try</span>
+          <h2>Special Chaat</h2>
+          <p>Customer Favorite</p>
         </div>
       </div>
     </div>
@@ -97,6 +107,7 @@
       <button onclick="prevSlide()"><i class="fas fa-chevron-left"></i></button>
       <button onclick="nextSlide()"><i class="fas fa-chevron-right"></i></button>
     </div>
+    <div class="slider-dots" id="sliderDots"></div>
   </section>
 
   <!-- Floating WhatsApp -->
@@ -116,15 +127,15 @@
         <!-- Aloo Chat -->
         <div class="product-card">
           <div class="product-badge">Bestseller</div>
-          <img src="./aaluchat.jpg" alt="Aloo Chat" onerror="this.src='https://via.placeholder.com/300x200/f5f5f5/333?text=Aloo+Chat'">
+          <img src="https://i.ibb.co/gFgQnFqt/dahi-aloo-chaat-jpg.webp" alt="Aloo Chat">
           <div class="product-info">
             <h3>Aloo Chat</h3>
-            <p class="product-desc">Spicy & tangy potato chaat</p>
+            <p class="product-desc">Spicy & tangy potato chaat with special chutney</p>
             <div class="product-price">
               <span class="current-price">₹20</span>
               <span class="old-price">₹25</span>
             </div>
-            <button class="add-to-cart" onclick="addToCart('Aloo Chat', 20, './aaluchat.jpg')">
+            <button class="add-to-cart" onclick="addToCart('Aloo Chat', 20, 'https://i.ibb.co/gFgQnFqt/dahi-aloo-chaat-jpg.webp')">
               <i class="fas fa-cart-plus"></i> Add to Cart
             </button>
           </div>
@@ -132,7 +143,7 @@
 
         <!-- Samosa -->
         <div class="product-card">
-          <img src="./samosa.jpg" alt="Samosa" onerror="this.src='https://via.placeholder.com/300x200/f5f5f5/333?text=Samosa'">
+          <img src="https://i.ibb.co/8LFZFS2R/1200-by-1200-images.jpg" alt="Samosa">
           <div class="product-info">
             <h3>Samosa</h3>
             <p class="product-desc">Crispy & stuffed with spicy potatoes</p>
@@ -140,7 +151,7 @@
               <span class="current-price">₹10</span>
               <span class="price-text">per piece</span>
             </div>
-            <button class="add-to-cart" onclick="addToCart('Samosa', 10, './samosa.jpg')">
+            <button class="add-to-cart" onclick="addToCart('Samosa', 10, 'https://i.ibb.co/8LFZFS2R/1200-by-1200-images.jpg')">
               <i class="fas fa-cart-plus"></i> Add to Cart
             </button>
           </div>
@@ -149,15 +160,15 @@
         <!-- Pani Puri -->
         <div class="product-card">
           <div class="product-badge">Popular</div>
-          <img src="./panipuri.jpg" alt="Pani Puri" onerror="this.src='https://via.placeholder.com/300x200/f5f5f5/333?text=Pani+Puri'">
+          <img src="https://i.ibb.co/xqWnYdL2/pani-puri.jpg" alt="Pani Puri">
           <div class="product-info">
             <h3>Pani Puri</h3>
-            <p class="product-desc">6 pcs with spicy mint water</p>
+            <p class="product-desc">6 pcs with spicy mint water & imli chutney</p>
             <div class="product-price">
               <span class="current-price">₹20</span>
               <span class="price-text">(6 pcs)</span>
             </div>
-            <button class="add-to-cart" onclick="addToCart('Pani Puri', 20, './panipuri.jpg')">
+            <button class="add-to-cart" onclick="addToCart('Pani Puri', 20, 'https://i.ibb.co/xqWnYdL2/pani-puri.jpg')">
               <i class="fas fa-cart-plus"></i> Add to Cart
             </button>
           </div>
@@ -165,46 +176,15 @@
 
         <!-- Karela -->
         <div class="product-card">
-          <img src="./karela.jpg" alt="Karela" onerror="this.src='https://via.placeholder.com/300x200/f5f5f5/333?text=Karela'">
+          <img src="https://i.ibb.co/hx1h7VnZ/images-1.jpg" alt="Karela">
           <div class="product-info">
             <h3>Karela</h3>
-            <p class="product-desc">Crispy bitter gourd snack</p>
+            <p class="product-desc">Crispy bitter gourd snack with special masala</p>
             <div class="product-price">
               <span class="current-price">₹15</span>
               <span class="price-text">per plate</span>
             </div>
-            <button class="add-to-cart" onclick="addToCart('Karela', 15, './karela.jpg')">
-              <i class="fas fa-cart-plus"></i> Add to Cart
-            </button>
-          </div>
-        </div>
-
-        <!-- New: Dahi Bhalla -->
-        <div class="product-card">
-          <div class="product-badge">New</div>
-          <img src="https://via.placeholder.com/300x200/f5f5f5/333?text=Dahi+Bhalla" alt="Dahi Bhalla">
-          <div class="product-info">
-            <h3>Dahi Bhalla</h3>
-            <p class="product-desc">Soft vadas with creamy curd</p>
-            <div class="product-price">
-              <span class="current-price">₹30</span>
-            </div>
-            <button class="add-to-cart" onclick="addToCart('Dahi Bhalla', 30, 'https://via.placeholder.com/300x200/f5f5f5/333?text=Dahi+Bhalla')">
-              <i class="fas fa-cart-plus"></i> Add to Cart
-            </button>
-          </div>
-        </div>
-
-        <!-- New: Bhel Puri -->
-        <div class="product-card">
-          <img src="https://via.placeholder.com/300x200/f5f5f5/333?text=Bhel+Puri" alt="Bhel Puri">
-          <div class="product-info">
-            <h3>Bhel Puri</h3>
-            <p class="product-desc">Crispy puffed rice mix</p>
-            <div class="product-price">
-              <span class="current-price">₹25</span>
-            </div>
-            <button class="add-to-cart" onclick="addToCart('Bhel Puri', 25, 'https://via.placeholder.com/300x200/f5f5f5/333?text=Bhel+Puri')">
+            <button class="add-to-cart" onclick="addToCart('Karela', 15, 'https://i.ibb.co/hx1h7VnZ/images-1.jpg')">
               <i class="fas fa-cart-plus"></i> Add to Cart
             </button>
           </div>
@@ -223,9 +203,9 @@
           <p>Daily fresh vegetables</p>
         </div>
         <div class="feature-item">
-          <i class="fas fa-truck"></i>
-          <h4>Fast Delivery</h4>
-          <p>30 min delivery</p>
+          <i class="fas fa-clock"></i>
+          <h4>Fast Service</h4>
+          <p>Ready in 10 minutes</p>
         </div>
         <div class="feature-item">
           <i class="fas fa-rupee-sign"></i>
@@ -241,22 +221,79 @@
     </div>
   </section>
 
-  <!-- Owner & Contact Section -->
+  <!-- Owner & Contact Section with Your Image -->
   <section class="owner-section">
     <div class="container">
       <div class="owner-wrapper">
         <div class="owner-image">
-          <img src="./owner.jpg" alt="Shivam Kushwah" onerror="this.src='https://via.placeholder.com/300x300/2f4f4f/ffffff?text=Shivam'">
+          <img src="https://i.ibb.co/6RH8HWf3/1682388381210-1.jpg" alt="Shivam Kushwah">
         </div>
         <div class="owner-info">
           <h2>Meet Our Owner</h2>
           <h3>Shivam Kushwah</h3>
-          <p>Bringing the taste of traditional Indian chaat to Agara since 2005. Every recipe is made with love and fresh ingredients passed down through generations.</p>
+          <p>Bringing the taste of traditional Indian chaat to Agara since 2005. Every recipe is made with love and fresh ingredients passed down through generations. We take pride in serving the purest and tastiest chaat in Sheopur district.</p>
           <div class="owner-contact">
-            <a href="tel:+917828951832"><i class="fas fa-phone"></i> 7828951832</a>
+            <a href="tel:+917828951832"><i class="fas fa-phone"></i> Call Now</a>
             <a href="https://wa.link/5fnin3" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            <a href="#" onclick="openOrderForm()"><i class="fas fa-shopping-bag"></i> Order Online</a>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Order Form -->
+  <section class="quick-order" id="quickOrder">
+    <div class="container">
+      <div class="section-header">
+        <h2>Quick Order</h2>
+        <p>Place your order and we'll confirm via WhatsApp</p>
+      </div>
+      
+      <div class="order-form-container">
+        <form id="quickOrderForm" onsubmit="placeOrder(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Your Name *</label>
+              <input type="text" id="customerName" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number *</label>
+              <input type="tel" id="customerPhone" placeholder="Enter WhatsApp number" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Address *</label>
+              <input type="text" id="customerAddress" placeholder="Village/Landmark" required>
+            </div>
+            <div class="form-group">
+              <label>Delivery Time</label>
+              <select id="deliveryTime">
+                <option value="ASAP">ASAP</option>
+                <option value="5:00 PM">5:00 PM</option>
+                <option value="6:00 PM">6:00 PM</option>
+                <option value="7:00 PM">7:00 PM</option>
+                <option value="8:00 PM">8:00 PM</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="order-summary" id="orderSummary">
+            <h4>Your Order Summary</h4>
+            <div id="summaryItems"></div>
+            <div class="summary-total">
+              <strong>Total: </strong>
+              <span id="summaryTotal">₹0</span>
+            </div>
+          </div>
+          
+          <button type="submit" class="place-order-btn" id="placeOrderBtn">
+            <i class="fab fa-whatsapp"></i> Place Order via WhatsApp
+          </button>
+          <p class="order-note">You'll be redirected to WhatsApp to confirm your order</p>
+        </form>
       </div>
     </div>
   </section>
@@ -279,11 +316,11 @@
           <input type="text" id="reviewName" placeholder="Your Name" required>
           <select id="reviewRating" required>
             <option value="">Rating</option>
-            <option value="5">⭐⭐⭐⭐⭐</option>
-            <option value="4">⭐⭐⭐⭐</option>
-            <option value="3">⭐⭐⭐</option>
-            <option value="2">⭐⭐</option>
-            <option value="1">⭐</option>
+            <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+            <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+            <option value="3">⭐⭐⭐ (3 Stars)</option>
+            <option value="2">⭐⭐ (2 Stars)</option>
+            <option value="1">⭐ (1 Star)</option>
           </select>
           <textarea id="reviewText" rows="3" placeholder="Your Review" required></textarea>
           <button type="submit">Submit Review</button>
@@ -292,39 +329,45 @@
     </div>
   </section>
 
+  <!-- Contact & Location -->
+  <section class="contact-section">
+    <div class="container">
+      <div class="contact-grid">
+        <div class="contact-info">
+          <h3>Visit Our Shop</h3>
+          <p><i class="fas fa-map-marker-alt"></i> Village Agara, Tahsil Vijaypur,<br>Dist. Sheopur, Madhya Pradesh 476332</p>
+          <p><i class="fas fa-phone"></i> +91 7828951832</p>
+          <p><i class="fas fa-envelope"></i> shivchatcenter@gmail.com</p>
+          <p><i class="fas fa-clock"></i> Open: 4:00 PM - 10:00 PM</p>
+        </div>
+        <div class="social-links-large">
+          <h3>Connect With Us</h3>
+          <div class="social-icons">
+            <a href="https://www.instagram.com/fts.shivam" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
+            <a href="https://wa.link/5fnin3" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            <a href="https://youtube.com/@shifit404" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <h4>Shiv Chat Center</h4>
-          <p>Fresh & Tasty Chaat since 2005</p>
-          <div class="social-links">
-            <a href="https://www.instagram.com/fts.shivam" target="_blank"><i class="fab fa-instagram"></i></a>
-            <a href="https://wa.link/5fnin3" target="_blank"><i class="fab fa-whatsapp"></i></a>
-            <a href="https://youtube.com/@shifit404" target="_blank"><i class="fab fa-youtube"></i></a>
-          </div>
-        </div>
-        <div class="footer-col">
-          <h4>Contact Info</h4>
-          <p><i class="fas fa-map-marker-alt"></i> Village Agara, Tahsil Vijaypur, Dist. Sheopur, MP 476332</p>
-          <p><i class="fas fa-phone"></i> 7828951832</p>
-          <p><i class="fas fa-envelope"></i> shivchatcenter@gmail.com</p>
-        </div>
-        <div class="footer-col">
-          <h4>Quick Links</h4>
-          <a href="#">Home</a>
-          <a href="#">Menu</a>
-          <a href="#">About Us</a>
-          <a href="#">Contact</a>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 Shiv Chat Center. All rights reserved.</p>
+      <div class="footer-content">
+        <p>&copy; 2026 Shiv Chat Center. All rights reserved. | Fresh Chaat Since 2005</p>
+        <p>Made with ❤️ in Agara, Sheopur</p>
       </div>
     </div>
   </footer>
 
   <script src="script.js"></script>
+  <script>
+    // Initialize EmailJS
+    (function() {
+      emailjs.init("8Ck-UsXslDfsH9Wt6");
+    })();
+  </script>
 </body>
-            </html>
+  </html>
