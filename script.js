@@ -10,7 +10,6 @@ let cart = JSON.parse(localStorage.getItem('cart')) || [];
 function updateCartCount() {
   const count = cart.reduce((total, item) => total + item.quantity, 0);
   document.getElementById('cartCount').textContent = count;
-  updateOrderSummary();
 }
 
 // Toggle cart sidebar
@@ -18,6 +17,11 @@ function toggleCart() {
   const cartSidebar = document.getElementById('cartSidebar');
   cartSidebar.classList.toggle('open');
   displayCartItems();
+  
+  // Hide order form when closing cart
+  if (!cartSidebar.classList.contains('open')) {
+    document.getElementById('cartOrderForm').style.display = 'none';
+  }
 }
 
 // Add to cart
@@ -49,10 +53,12 @@ function addToCart(name, price, image) {
     cartIcon.style.color = '#1e3c3c';
   }, 200);
   
-  // Auto open cart
+  // Auto open cart and show items
   document.getElementById('cartSidebar').classList.add('open');
   displayCartItems();
-  updateOrderSummary();
+  
+  // Hide order form when adding new items
+  document.getElementById('cartOrderForm').style.display = 'none';
 }
 
 // Display cart items
@@ -63,6 +69,7 @@ function displayCartItems() {
   if (cart.length === 0) {
     cartItems.innerHTML = '<div class="empty-cart"><i class="fas fa-shopping-cart"></i><p>Your cart is empty</p><p style="font-size:0.9rem; color:#999;">Add items to start ordering</p></div>';
     cartTotal.textContent = '₹0';
+    document.getElementById('cartOrderForm').style.display = 'none';
     return;
   }
   
@@ -90,7 +97,7 @@ function displayCartItems() {
   
   cartItems.innerHTML = html;
   cartTotal.textContent = `₹${total}`;
-  updateOrderSummary();
+  updateCartOrderSummary();
 }
 
 // Update quantity
@@ -114,60 +121,63 @@ function removeFromCart(index) {
   displayCartItems();
 }
 
-// Update order summary in quick order form
-function updateOrderSummary() {
-  const summaryItems = document.getElementById('summaryItems');
-  const summaryTotal = document.getElementById('summaryTotal');
-  
-  if (!summaryItems || !summaryTotal) return;
-  
+// Show order form in cart
+function showOrderForm() {
   if (cart.length === 0) {
-    summaryItems.innerHTML = '<p style="color:#999; text-align:center;">No items in cart</p>';
-    summaryTotal.textContent = '₹0';
+    alert('Your cart is empty! Add some items first.');
     return;
   }
   
-  let html = '';
+  document.getElementById('cartOrderForm').style.display = 'block';
+  updateCartOrderSummary();
+  
+  // Scroll to order form
+  setTimeout(() => {
+    document.querySelector('.cart-order-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+// Update order summary inside cart
+function updateCartOrderSummary() {
+  const summaryDiv = document.getElementById('cartOrderSummary');
+  if (!summaryDiv) return;
+  
+  if (cart.length === 0) {
+    summaryDiv.innerHTML = '<p style="color:#999; text-align:center;">No items in cart</p>';
+    return;
+  }
+  
+  let itemsHtml = '';
   let total = 0;
   
   cart.forEach(item => {
     const itemTotal = item.price * item.quantity;
     total += itemTotal;
-    html += `
-      <div class="summary-item">
+    itemsHtml += `
+      <div class="cart-order-item">
         <span>${item.name} x${item.quantity}</span>
         <span>₹${itemTotal}</span>
       </div>
     `;
   });
   
-  summaryItems.innerHTML = html;
-  summaryTotal.textContent = `₹${total}`;
+  summaryDiv.innerHTML = `
+    ${itemsHtml}
+    <div class="cart-order-total">
+      <span>Total:</span>
+      <span>₹${total}</span>
+    </div>
+  `;
 }
 
-// Proceed to checkout / Place order
-function proceedToCheckout() {
-  if (cart.length === 0) {
-    alert('Your cart is empty! Add some items first.');
-    return;
-  }
-  
-  // Scroll to order form
-  document.getElementById('quickOrder').scrollIntoView({ behavior: 'smooth' });
-  toggleCart(); // Close cart sidebar
-  
-  // Pre-fill order summary
-  updateOrderSummary();
-}
-
-// Place order via WhatsApp
-function placeOrder(event) {
+// Place order from cart
+function placeOrderFromCart(event) {
   event.preventDefault();
   
-  const name = document.getElementById('customerName').value;
-  const phone = document.getElementById('customerPhone').value;
-  const address = document.getElementById('customerAddress').value;
-  const deliveryTime = document.getElementById('deliveryTime').value;
+  const name = document.getElementById('cartName').value;
+  const phone = document.getElementById('cartPhone').value;
+  const address = document.getElementById('cartAddress').value;
+  const time = document.getElementById('cartTime').value;
   
   if (!name || !phone || !address) {
     alert('Please fill all required fields');
@@ -175,7 +185,7 @@ function placeOrder(event) {
   }
   
   if (cart.length === 0) {
-    alert('Your cart is empty! Add some items first.');
+    alert('Your cart is empty!');
     return;
   }
   
@@ -189,19 +199,19 @@ function placeOrder(event) {
     orderItems += `${item.name} x${item.quantity} = ₹${itemTotal}\n`;
   });
   
-  const message = `*New Order from Shiv Chat Center*\n\n*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\nDelivery Time: ${deliveryTime}\n\n*Order Items:*\n${orderItems}\n*Total Amount: ₹${totalAmount}*\n\n*Thank you for ordering!*`;
+  const message = `*New Order from Shiv Chat Center*\n\n*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\nDelivery Time: ${time}\n\n*Order Items:*\n${orderItems}\n*Total Amount: ₹${totalAmount}*\n\n*Thank you for ordering!*`;
   
   // WhatsApp URL
   const whatsappURL = `https://wa.me/917828951832?text=${encodeURIComponent(message)}`;
   
-  // Try to send email via EmailJS (optional, won't block WhatsApp)
+  // Send email via EmailJS
   try {
     const templateParams = {
       to_email: 'shivchatcenter@gmail.com',
       customer_name: name,
       customer_phone: phone,
       customer_address: address,
-      delivery_time: deliveryTime,
+      delivery_time: time,
       order_items: orderItems,
       total_amount: `₹${totalAmount}`,
       reply_to: 'shivchatcenter@gmail.com'
@@ -209,7 +219,7 @@ function placeOrder(event) {
     
     emailjs.send('service_deccs1c', 'template_sta3gch', templateParams)
       .then(function(response) {
-        console.log('Email sent successfully!', response);
+        console.log('Email sent successfully!');
       }, function(error) {
         console.log('Email failed to send', error);
       });
@@ -226,11 +236,12 @@ function placeOrder(event) {
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartCount();
     displayCartItems();
-    updateOrderSummary();
+    document.getElementById('cartOrderForm').style.display = 'none';
+    document.getElementById('cartCheckoutForm').reset();
     
-    // Reset form
-    document.getElementById('quickOrderForm').reset();
-  }, 2000);
+    // Show success message
+    alert('Order placed! Check WhatsApp to confirm.');
+  }, 1500);
 }
 
 // Hero Slider
@@ -379,22 +390,11 @@ function addReview(event) {
   }
 }
 
-// Open order form
-function openOrderForm() {
-  if (cart.length === 0) {
-    alert('Please add items to cart first');
-    return;
-  }
-  document.getElementById('quickOrder').scrollIntoView({ behavior: 'smooth' });
-  updateOrderSummary();
-}
-
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   updateCartCount();
   displayReviews();
   createSliderDots();
-  updateOrderSummary();
   
   // Close cart when clicking outside
   document.addEventListener('click', (e) => {
@@ -405,6 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
         !cartSidebar.contains(e.target) && 
         !cartIcon.contains(e.target)) {
       cartSidebar.classList.remove('open');
+      document.getElementById('cartOrderForm').style.display = 'none';
     }
   });
   
@@ -412,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       document.getElementById('cartSidebar').classList.remove('open');
+      document.getElementById('cartOrderForm').style.display = 'none';
     }
   });
 });
