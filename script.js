@@ -1,10 +1,16 @@
 // Cart System
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
+// Initialize EmailJS
+(function() {
+    emailjs.init("8Ck-UsXslDfsH9Wt6");
+})();
+
 // Update cart count
 function updateCartCount() {
   const count = cart.reduce((total, item) => total + item.quantity, 0);
   document.getElementById('cartCount').textContent = count;
+  updateOrderSummary();
 }
 
 // Toggle cart sidebar
@@ -35,13 +41,18 @@ function addToCart(name, price, image) {
   // Show animation
   const cartIcon = document.querySelector('.cart-icon');
   cartIcon.style.transform = 'scale(1.2)';
+  cartIcon.style.backgroundColor = '#d2691e';
+  cartIcon.style.color = 'white';
   setTimeout(() => {
     cartIcon.style.transform = 'scale(1)';
+    cartIcon.style.backgroundColor = '#f8f4ee';
+    cartIcon.style.color = '#1e3c3c';
   }, 200);
   
   // Auto open cart
   document.getElementById('cartSidebar').classList.add('open');
   displayCartItems();
+  updateOrderSummary();
 }
 
 // Display cart items
@@ -50,7 +61,7 @@ function displayCartItems() {
   const cartTotal = document.getElementById('cartTotal');
   
   if (cart.length === 0) {
-    cartItems.innerHTML = '<div class="empty-cart"><i class="fas fa-shopping-cart"></i><p>Your cart is empty</p></div>';
+    cartItems.innerHTML = '<div class="empty-cart"><i class="fas fa-shopping-cart"></i><p>Your cart is empty</p><p style="font-size:0.9rem; color:#999;">Add items to start ordering</p></div>';
     cartTotal.textContent = '₹0';
     return;
   }
@@ -62,7 +73,7 @@ function displayCartItems() {
     total += item.price * item.quantity;
     html += `
       <div class="cart-item">
-        <img src="${item.image}" alt="${item.name}" class="cart-item-img" onerror="this.src='https://via.placeholder.com/60x60/f5f5f5/333?text=${item.name}'">
+        <img src="${item.image}" alt="${item.name}" class="cart-item-img">
         <div class="cart-item-info">
           <h4>${item.name}</h4>
           <div class="cart-item-price">₹${item.price}</div>
@@ -72,13 +83,14 @@ function displayCartItems() {
             <button onclick="updateQuantity(${index}, 1)">+</button>
           </div>
         </div>
-        <i class="fas fa-trash" onclick="removeFromCart(${index})" style="color:#ff4444; cursor:pointer;"></i>
+        <i class="fas fa-trash" onclick="removeFromCart(${index})" style="color:#ff4444; cursor:pointer; font-size:1.1rem;"></i>
       </div>
     `;
   });
   
   cartItems.innerHTML = html;
   cartTotal.textContent = `₹${total}`;
+  updateOrderSummary();
 }
 
 // Update quantity
@@ -102,40 +114,123 @@ function removeFromCart(index) {
   displayCartItems();
 }
 
-// Proceed to checkout
-function proceedToCheckout() {
-  const user = localStorage.getItem('user');
+// Update order summary in quick order form
+function updateOrderSummary() {
+  const summaryItems = document.getElementById('summaryItems');
+  const summaryTotal = document.getElementById('summaryTotal');
   
-  if (!user) {
-    alert('Please login to proceed with checkout');
-    openLoginModal();
+  if (!summaryItems || !summaryTotal) return;
+  
+  if (cart.length === 0) {
+    summaryItems.innerHTML = '<p style="color:#999; text-align:center;">No items in cart</p>';
+    summaryTotal.textContent = '₹0';
+    return;
+  }
+  
+  let html = '';
+  let total = 0;
+  
+  cart.forEach(item => {
+    const itemTotal = item.price * item.quantity;
+    total += itemTotal;
+    html += `
+      <div class="summary-item">
+        <span>${item.name} x${item.quantity}</span>
+        <span>₹${itemTotal}</span>
+      </div>
+    `;
+  });
+  
+  summaryItems.innerHTML = html;
+  summaryTotal.textContent = `₹${total}`;
+}
+
+// Proceed to checkout / Place order
+function proceedToCheckout() {
+  if (cart.length === 0) {
+    alert('Your cart is empty! Add some items first.');
+    return;
+  }
+  
+  // Scroll to order form
+  document.getElementById('quickOrder').scrollIntoView({ behavior: 'smooth' });
+  toggleCart(); // Close cart sidebar
+  
+  // Pre-fill order summary
+  updateOrderSummary();
+}
+
+// Place order via WhatsApp
+function placeOrder(event) {
+  event.preventDefault();
+  
+  const name = document.getElementById('customerName').value;
+  const phone = document.getElementById('customerPhone').value;
+  const address = document.getElementById('customerAddress').value;
+  const deliveryTime = document.getElementById('deliveryTime').value;
+  
+  if (!name || !phone || !address) {
+    alert('Please fill all required fields');
     return;
   }
   
   if (cart.length === 0) {
-    alert('Your cart is empty');
+    alert('Your cart is empty! Add some items first.');
     return;
   }
   
-  // Prepare order details
-  const orderDetails = cart.map(item => 
-    `${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
-  ).join('\n');
+  // Prepare order message
+  let orderItems = '';
+  let totalAmount = 0;
   
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  cart.forEach(item => {
+    const itemTotal = item.price * item.quantity;
+    totalAmount += itemTotal;
+    orderItems += `${item.name} x${item.quantity} = ₹${itemTotal}\n`;
+  });
   
-  // Send to email via mailto
-  const emailBody = `New Order from ${JSON.parse(user).name}\n\nItems:\n${orderDetails}\n\nTotal: ₹${total}\n\nPhone: ${JSON.parse(user).phone || 'Not provided'}`;
+  const message = `*New Order from Shiv Chat Center*\n\n*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\nDelivery Time: ${deliveryTime}\n\n*Order Items:*\n${orderItems}\n*Total Amount: ₹${totalAmount}*\n\n*Thank you for ordering!*`;
   
-  window.location.href = `mailto:shivchatcenter@gmail.com?subject=New Order from Shiv Chat Center&body=${encodeURIComponent(emailBody)}`;
+  // WhatsApp URL
+  const whatsappURL = `https://wa.me/917828951832?text=${encodeURIComponent(message)}`;
   
-  // Clear cart
-  cart = [];
-  localStorage.setItem('cart', JSON.stringify(cart));
-  updateCartCount();
-  toggleCart();
+  // Try to send email via EmailJS (optional, won't block WhatsApp)
+  try {
+    const templateParams = {
+      to_email: 'shivchatcenter@gmail.com',
+      customer_name: name,
+      customer_phone: phone,
+      customer_address: address,
+      delivery_time: deliveryTime,
+      order_items: orderItems,
+      total_amount: `₹${totalAmount}`,
+      reply_to: 'shivchatcenter@gmail.com'
+    };
+    
+    emailjs.send('service_deccs1c', 'template_sta3gch', templateParams)
+      .then(function(response) {
+        console.log('Email sent successfully!', response);
+      }, function(error) {
+        console.log('Email failed to send', error);
+      });
+  } catch (error) {
+    console.log('EmailJS error:', error);
+  }
   
-  alert('Order placed! You will receive confirmation shortly.');
+  // Open WhatsApp
+  window.open(whatsappURL, '_blank');
+  
+  // Clear cart after order
+  setTimeout(() => {
+    cart = [];
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    displayCartItems();
+    updateOrderSummary();
+    
+    // Reset form
+    document.getElementById('quickOrderForm').reset();
+  }, 2000);
 }
 
 // Hero Slider
@@ -146,6 +241,13 @@ const totalSlides = slides.length;
 function showSlide(index) {
   slides.forEach(slide => slide.classList.remove('active'));
   slides[index].classList.add('active');
+  
+  // Update dots
+  const dots = document.querySelectorAll('.dot');
+  if (dots.length) {
+    dots.forEach(dot => dot.classList.remove('active'));
+    dots[index].classList.add('active');
+  }
 }
 
 function nextSlide() {
@@ -159,43 +261,36 @@ function prevSlide() {
 }
 
 // Auto slide change
-setInterval(nextSlide, 5000);
+let slideInterval = setInterval(nextSlide, 5000);
 
-// Login Modal
-function openLoginModal() {
-  document.getElementById('loginModal').style.display = 'flex';
-}
-
-function closeLoginModal() {
-  document.getElementById('loginModal').style.display = 'none';
-}
-
-// Handle login
-function handleLogin(event) {
-  event.preventDefault();
-  const email = event.target[0].value;
-  const password = event.target[1].value;
+// Pause on hover
+const hero = document.querySelector('.hero');
+if (hero) {
+  hero.addEventListener('mouseenter', () => {
+    clearInterval(slideInterval);
+  });
   
-  // Simple validation
-  if (email && password) {
-    localStorage.setItem('user', JSON.stringify({
-      name: email.split('@')[0],
-      email: email
-    }));
-    
-    alert('Login successful!');
-    closeLoginModal();
-    updateNavButton();
-  }
+  hero.addEventListener('mouseleave', () => {
+    slideInterval = setInterval(nextSlide, 5000);
+  });
 }
 
-// Update nav button
-function updateNavButton() {
-  const user = localStorage.getItem('user');
-  const loginBtn = document.querySelector('.nav-login-btn');
+// Create slider dots
+function createSliderDots() {
+  const dotsContainer = document.getElementById('sliderDots');
+  if (!dotsContainer) return;
   
-  if (user) {
-    loginBtn.innerHTML = `<i class="fas fa-user"></i> ${JSON.parse(user).name.split(' ')[0]}`;
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('span');
+    dot.classList.add('dot');
+    if (i === 0) dot.classList.add('active');
+    dot.onclick = () => {
+      currentSlide = i;
+      showSlide(i);
+      clearInterval(slideInterval);
+      slideInterval = setInterval(nextSlide, 5000);
+    };
+    dotsContainer.appendChild(dot);
   }
 }
 
@@ -205,28 +300,35 @@ let reviews = JSON.parse(localStorage.getItem('reviews')) || [
     name: "Rahul Sharma",
     rating: 5,
     date: "2024-03-15",
-    text: "Best Aloo Chat in Agara! Fresh ingredients and amazing taste."
+    text: "Best Aloo Chat in Agara! Fresh ingredients and amazing taste. The owner is very friendly."
   },
   {
     name: "Priya Patel",
     rating: 4,
     date: "2024-03-10",
-    text: "Samosa was crispy and delicious. Very reasonable prices."
+    text: "Samosa was crispy and delicious. Very reasonable prices. Will visit again!"
   },
   {
     name: "Amit Verma",
     rating: 5,
     date: "2024-03-05",
-    text: "Authentic taste, friendly owner. Pani Puri is a must-try!"
+    text: "Authentic taste, friendly owner. Pani Puri is a must-try! Five stars from me."
+  },
+  {
+    name: "Neha Singh",
+    rating: 5,
+    date: "2024-03-01",
+    text: "The best chaat in Sheopur district. Highly recommended for evening snacks."
   }
 ];
 
 // Display reviews
 function displayReviews() {
   const reviewsGrid = document.getElementById('reviewsGrid');
+  if (!reviewsGrid) return;
   
   let html = '';
-  reviews.slice(0, 3).forEach(review => {
+  reviews.slice(0, 4).forEach(review => {
     const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
     html += `
       <div class="review-card">
@@ -255,7 +357,11 @@ function addReview(event) {
     const newReview = {
       name: name,
       rating: rating,
-      date: new Date().toLocaleDateString('en-GB'),
+      date: new Date().toLocaleDateString('en-GB', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
       text: text
     };
     
@@ -264,23 +370,43 @@ function addReview(event) {
     
     displayReviews();
     event.target.reset();
-    alert('Thank you for your review!');
+    
+    // Show success message
+    alert('Thank you for your review! 🙏');
+    
+    // Scroll to reviews
+    document.querySelector('.reviews').scrollIntoView({ behavior: 'smooth' });
   }
 }
 
-// Initialize
+// Open order form
+function openOrderForm() {
+  if (cart.length === 0) {
+    alert('Please add items to cart first');
+    return;
+  }
+  document.getElementById('quickOrder').scrollIntoView({ behavior: 'smooth' });
+  updateOrderSummary();
+}
+
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   updateCartCount();
-  updateNavButton();
   displayReviews();
+  createSliderDots();
+  updateOrderSummary();
   
-  // Close modal when clicking outside
-  window.onclick = function(event) {
-    const modal = document.getElementById('loginModal');
-    if (event.target === modal) {
-      modal.style.display = 'none';
+  // Close cart when clicking outside
+  document.addEventListener('click', (e) => {
+    const cartSidebar = document.getElementById('cartSidebar');
+    const cartIcon = document.querySelector('.cart-icon');
+    
+    if (cartSidebar.classList.contains('open') && 
+        !cartSidebar.contains(e.target) && 
+        !cartIcon.contains(e.target)) {
+      cartSidebar.classList.remove('open');
     }
-  };
+  });
   
   // Close cart on escape key
   document.addEventListener('keydown', (e) => {
@@ -289,8 +415,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-// Show register form
-function showRegister() {
-  alert('Registration form will open. Please fill your details.');
-    }
